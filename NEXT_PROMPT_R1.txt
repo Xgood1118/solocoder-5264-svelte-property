@@ -1,0 +1,1 @@
+后端根本起不来，`cd backend && python run.py` 直接 `ImportError: cannot import name 'ContractStatus' from 'app.models'`，uvicorn 还没监听端口就崩了，连 FastAPI app 都构造不出来。前端 `pnpm dev` 倒能起 5173，但调 `/api/contracts` 全是 502/连接拒绝，仪表盘四个统计卡片全是 0 / 加载失败。检查修复一下。

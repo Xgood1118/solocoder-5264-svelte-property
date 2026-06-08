@@ -1,0 +1,17 @@
+{
+	"/": [],
+	"/bills": [],
+	"/contracts": [],
+	"/contracts/new": [],
+	"/contracts/[id]/checkout": [],
+	"/contracts/[id]/renew": [],
+	"/properties": [],
+	"/properties/new": [],
+	"/properties/[id]/edit": [],
+	"/renewals": [],
+	"/repairs": [],
+	"/repairs/new": [],
+	"/tenants": [],
+	"/tenants/new": [],
+	"/tenants/[id]/edit": []
+}

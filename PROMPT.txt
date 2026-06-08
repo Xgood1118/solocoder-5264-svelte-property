@@ -1,0 +1,37 @@
+需求：Svelte + Python FastAPI 房产管理系统，房源 / 租客 / 合同 / 账单 / 维修 / 续约全流程。
+
+背景：家里有亲戚是小型二房东，手下管着 20 多套出租房，每月要算账、催租、处理维修报事。Excel 越用越乱，他想要个简单的系统把"哪套房、租给谁、合同到什么时候、欠多少租、维修单进度"全管起来。技术栈 Svelte（轻量前端）+ FastAPI（异步后端），数据 SQLite。
+
+核心功能：
+- 房源：地址、户型、面积、楼层、装修状态、照片、当前是否在租
+- 租客：姓名、手机、身份证号（脱敏存）、紧急联系人、当前租的房
+- 合同：起止日期、月租、押金、付款周期（月付 / 季付 / 年付）、续约选项
+- 账单：每月自动生成房租账单（含滞纳金规则——晚 1 天收 0.5% 滞纳金，最多 30%）
+- 账单状态：未付 / 部分付 / 已付 / 逾期；逾期标红 + 通知
+- 维修报事：租客提交（描述、紧急程度、照片），房东处理（接单 → 处理中 → 已完成 → 已验收）
+- 续约：合同到期前 30 天提醒，租客可线上发起续约（调整月租 / 续期时长）
+- 退租：合同到期 / 提前解约，结算押金扣除（清洁费、维修分摊），出具结算单
+
+涉及模块：
+- `backend/app/api/`：properties / tenants / contracts / bills / repairs / renewals 路由
+- `backend/app/services/`：账单生成器、滞纳金计算、维修分摊、续约规则
+- `backend/app/models/`：SQLAlchemy 模型、关系
+- `backend/app/scheduler/`：APScheduler 定时任务（每月生成账单、检查逾期）
+- `frontend/src/routes/`：SvelteKit 路由（properties、tenants、contracts、bills、repairs）
+- `frontend/src/lib/`：组件（BillCard、ContractEditor、RepairTimeline）
+- `frontend/src/lib/stores/`：Svelte stores
+
+注意事项：
+- 滞纳金公式：超期天数 × 月租 × 0.005，上限 30%，跨月累加
+- 合同付款周期决定账单生成频率：月付每月 1 号生成、季付每季第一个月 1 号生成
+- 续约要校验不能跨过空房期（旧合同结束日到新合同开始日之间要 > 0 天，留清洁时间）
+- 维修分摊规则：租客使用不当 → 全额；自然损耗 → 房东；金额 > 500 → 双方协商
+- 押金扣除清单要逐项列出（清洁费 + 维修费 + 欠租），不能笼统"扣除 N 元"
+- 退租流程要冻结账单生成，否则退租当月又生成新账单
+- 账单支付用 mock，不接真支付，但要有 paid_at、payment_method 字段
+- 租客身份证号、手机号显示要脱敏（138****8000），数据库存原值
+- 提前解约要算违约金：未到期月份 × 月租 × 30%（双方合同约定值）
+- 定时任务（每月 1 号生成账单）不要在月初 0 点整跑（数据库压力大），改成凌晨 3 点
+- FastAPI 异步：用 `async def` 路由 + `aiomysql` 或 `asyncpg`，不要混 sync ORM
+- SvelteKit + form actions 可以省去单独写 API（用 +page.server.ts），但跨端调用还是用 fetch
+- Svelte 的 $: 响应式声明要小心数组引用，push 不会触发更新，要重新赋值
